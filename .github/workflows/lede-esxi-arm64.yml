@@ -85,15 +85,21 @@ jobs:
           set -euo pipefail
           shopt -s nullglob
           images=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.img.gz)
-          vmdks=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.vmdk)
+          vmdks=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.vmdk.gz)
           if (( ${#images[@]} != 1 || ${#vmdks[@]} != 1 )); then
-            printf 'Expected one ARM64 EFI image and one VMDK; found %d and %d\n' \
+            printf 'Expected one ARM64 EFI image and one compressed VMDK; found %d and %d\n' \
               "${#images[@]}" "${#vmdks[@]}" >&2
+            ls -lh bin/targets/armsr/armv8/ >&2
             exit 1
           fi
           artifact_dir="$RUNNER_TEMP/lede-esxi-arm64"
           mkdir -p "$artifact_dir"
-          cp -- "${images[0]}" "${vmdks[0]}" "$artifact_dir/"
+          cp -- "${images[0]}" "$artifact_dir/"
+          vmdk_name="${vmdks[0]##*/}"
+          vmdk_path="$artifact_dir/${vmdk_name%.gz}"
+          gzip -t "${images[0]}"
+          gzip -dc -- "${vmdks[0]}" > "$vmdk_path"
+          qemu-img check -f vmdk "$vmdk_path"
           cp -- .config "$artifact_dir/resolved.config"
           {
             printf 'Source repository: %s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
@@ -109,7 +115,7 @@ jobs:
               fi
             done
             printf '\nVMDK details:\n'
-            qemu-img info "${vmdks[0]}"
+            qemu-img info "$vmdk_path"
           } > "$artifact_dir/BUILD-INFO.txt"
           (
             cd "$artifact_dir"
