@@ -1,0 +1,127 @@
+name: Build LEDE for ESXi ARM64
+
+"on":
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lede-esxi-arm64-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout the fork
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison \
+            build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler \
+            flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf \
+            help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
+            libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev \
+            libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool \
+            llvm lrzsz libnsl-dev ninja-build p7zip p7zip-full patch pkgconf \
+            python3 python3-pyelftools python3-setuptools qemu-utils rsync scons \
+            squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip wget \
+            xmlto xxd xz-utils zlib1g-dev
+          df -h .
+
+      - name: Update package feeds
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      - name: Resolve and verify firmware configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp build-configs/esxi-arm64.config .config
+          make defconfig
+          for option in \
+            CONFIG_TARGET_armsr=y \
+            CONFIG_TARGET_armsr_armv8=y \
+            CONFIG_TARGET_armsr_armv8_DEVICE_generic=y \
+            CONFIG_TARGET_ROOTFS_EXT4FS=y \
+            CONFIG_GRUB_EFI_IMAGES=y \
+            CONFIG_VMDK_IMAGES=y \
+            CONFIG_PACKAGE_kmod-vmxnet3=y \
+            CONFIG_PACKAGE_luci=y \
+            CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+          do
+            grep -Fx -- "$option" .config || {
+              printf 'Required build option was not selected: %s\n' "$option" >&2
+              exit 1
+            }
+          done
+
+      - name: Download sources
+        shell: bash
+        run: make download -j4
+
+      - name: Build firmware
+        shell: bash
+        run: make -j"$(nproc)" V=s
+
+      - name: Prepare and verify build artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          images=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.img.gz)
+          vmdks=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.vmdk)
+          if (( ${#images[@]} != 1 || ${#vmdks[@]} != 1 )); then
+            printf 'Expected one ARM64 EFI image and one VMDK; found %d and %d\n' \
+              "${#images[@]}" "${#vmdks[@]}" >&2
+            exit 1
+          fi
+          artifact_dir="$RUNNER_TEMP/lede-esxi-arm64"
+          mkdir -p "$artifact_dir"
+          cp -- "${images[0]}" "${vmdks[0]}" "$artifact_dir/"
+          cp -- .config "$artifact_dir/resolved.config"
+          {
+            printf 'Source repository: %s\n' "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+            printf 'Source commit: %s\n' "$(git rev-parse HEAD)"
+            printf 'Workflow run: %s/%s/actions/runs/%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+            printf 'Built at (UTC): %s\n' "$(date -u +%FT%TZ)"
+            printf '\nFeed commits:\n'
+            for feed in feeds/*; do
+              if [ -d "$feed/.git" ]; then
+                printf '%s ' "${feed##*/}"
+                git -C "$feed" rev-parse HEAD
+              fi
+            done
+            printf '\nVMDK details:\n'
+            qemu-img info "${vmdks[0]}"
+          } > "$artifact_dir/BUILD-INFO.txt"
+          (
+            cd "$artifact_dir"
+            sha256sum -- ./*.img.gz ./*.vmdk resolved.config BUILD-INFO.txt > SHA256SUMS
+            sha256sum -c SHA256SUMS
+          )
+
+      - name: Upload firmware and provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: lede-esxi-arm64-${{ github.sha }}
+          path: ${{ runner.temp }}/lede-esxi-arm64/
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
