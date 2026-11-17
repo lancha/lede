@@ -5,6 +5,7 @@ name: Build LEDE for ESXi ARM64
   push:
     branches:
       - master
+      - codex/esxi-arm64-features
 
 permissions:
   contents: read
@@ -48,8 +49,19 @@ jobs:
           # Later LuCI feed commits move luci-mod-network into QWRT core;
           # this LEDE revision still needs the module supplied by the feed.
           sed -i 's|^src-git luci .*|src-git luci https://github.com/coolsnowwolf/luci.git^e881fed794a36dd18f282a4e227b7a1ced5679e5|' feeds.conf.default
+          cat >> feeds.conf.default <<'EOF'
+          src-git openclash https://github.com/vernesong/OpenClash.git^e553e82e01c697aefbe1555261a503f425e00ccd
+          src-git istore https://github.com/istoreos/istore.git^a97ace34f2da358a015b094d326bba2697697f2e
+          EOF
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          git clone --depth=1 \
+            https://github.com/thinktip/luci-theme-neobird.git \
+            package/luci-theme-neobird
+          git -C package/luci-theme-neobird fetch --depth=1 origin \
+            22ebcf0d09c4ec50594b11c1b5419d474970aaa2
+          git -C package/luci-theme-neobird checkout --detach \
+            22ebcf0d09c4ec50594b11c1b5419d474970aaa2
 
       - name: Resolve and verify firmware configuration
         shell: bash
@@ -67,7 +79,18 @@ jobs:
             CONFIG_PACKAGE_kmod-vmxnet3=y \
             CONFIG_PACKAGE_luci=y \
             CONFIG_PACKAGE_luci-mod-network=y \
-            CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
+            CONFIG_PACKAGE_luci-i18n-base-zh-cn=y \
+            CONFIG_PACKAGE_luci-compat=y \
+            CONFIG_PACKAGE_luci-theme-neobird=y \
+            CONFIG_PACKAGE_luci-app-openclash=y \
+            CONFIG_PACKAGE_luci-app-store=y \
+            CONFIG_PACKAGE_dnsmasq-full=y \
+            CONFIG_PACKAGE_kmod-tun=y \
+            CONFIG_PACKAGE_kmod-nft-tproxy=y \
+            CONFIG_PACKAGE_ruby=y \
+            CONFIG_PACKAGE_ruby-yaml=y \
+            CONFIG_PACKAGE_open-box-installer=y \
+            CONFIG_PACKAGE_lede-default-settings=y
           do
             grep -Fx -- "$option" .config || {
               printf 'Required build option was not selected: %s\n' "$option" >&2
@@ -90,15 +113,30 @@ jobs:
           shopt -s nullglob
           images=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.img.gz)
           vmdks=(bin/targets/armsr/armv8/*-generic-ext4-combined-efi.vmdk.gz)
-          if (( ${#images[@]} != 1 || ${#vmdks[@]} != 1 )); then
-            printf 'Expected one ARM64 EFI image and one compressed VMDK; found %d and %d\n' \
-              "${#images[@]}" "${#vmdks[@]}" >&2
+          manifests=(bin/targets/armsr/armv8/*.manifest)
+          if (( ${#images[@]} != 1 || ${#vmdks[@]} != 1 || ${#manifests[@]} != 1 )); then
+            printf 'Expected one EFI image, one compressed VMDK and one manifest; found %d, %d and %d\n' \
+              "${#images[@]}" "${#vmdks[@]}" "${#manifests[@]}" >&2
             ls -lh bin/targets/armsr/armv8/ >&2
             exit 1
           fi
+          for package in \
+            luci-app-openclash \
+            luci-app-store \
+            luci-theme-neobird \
+            open-box-installer \
+            lede-default-settings \
+            dnsmasq-full
+          do
+            grep -q "^${package} " "${manifests[0]}" || {
+              printf 'Required package is absent from the firmware manifest: %s\n' "$package" >&2
+              exit 1
+            }
+          done
           artifact_dir="$RUNNER_TEMP/lede-esxi-arm64"
           mkdir -p "$artifact_dir"
           cp -- "${images[0]}" "$artifact_dir/"
+          cp -- "${manifests[0]}" "$artifact_dir/installed.manifest"
           vmdk_name="${vmdks[0]##*/}"
           vmdk_path="$artifact_dir/${vmdk_name%.gz}"
           # LEDE appends optional metadata/signatures after gzip; strip only the
@@ -129,7 +167,7 @@ jobs:
           } > "$artifact_dir/BUILD-INFO.txt"
           (
             cd "$artifact_dir"
-            sha256sum -- ./*.img.gz ./*.vmdk resolved.config BUILD-INFO.txt > SHA256SUMS
+            sha256sum -- ./*.img.gz ./*.vmdk resolved.config BUILD-INFO.txt installed.manifest > SHA256SUMS
             sha256sum -c SHA256SUMS
           )
 
