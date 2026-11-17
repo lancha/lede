@@ -45,6 +45,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Later LuCI feed commits move luci-mod-network into QWRT core;
+          # this LEDE revision still needs the module supplied by the feed.
+          sed -i 's|^src-git luci .*|src-git luci https://github.com/coolsnowwolf/luci.git^e881fed794a36dd18f282a4e227b7a1ced5679e5|' feeds.conf.default
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
@@ -63,6 +66,7 @@ jobs:
             CONFIG_VMDK_IMAGES=y \
             CONFIG_PACKAGE_kmod-vmxnet3=y \
             CONFIG_PACKAGE_luci=y \
+            CONFIG_PACKAGE_luci-mod-network=y \
             CONFIG_PACKAGE_luci-i18n-base-zh-cn=y
           do
             grep -Fx -- "$option" .config || {
