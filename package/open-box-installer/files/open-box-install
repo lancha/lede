@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+installer=$(mktemp /tmp/open-box-install.XXXXXX)
+trap 'rm -f "$installer"' EXIT
+
+curl -fsSL \
+  https://raw.githubusercontent.com/liandu2024/Open-Box/795a6141576c09fda79e8d8cb03cf13e92d82450/scripts/install.sh \
+  -o "$installer"
+sh "$installer" "$@"
