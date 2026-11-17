@@ -97,7 +97,13 @@ jobs:
           cp -- "${images[0]}" "$artifact_dir/"
           vmdk_name="${vmdks[0]##*/}"
           vmdk_path="$artifact_dir/${vmdk_name%.gz}"
-          gzip -t "${images[0]}"
+          # LEDE appends optional metadata/signatures after gzip; strip only the
+          # validation copy so the published firmware retains its metadata.
+          image_check="$RUNNER_TEMP/lede-image-check.img.gz"
+          cp -- "${images[0]}" "$image_check"
+          ./staging_dir/host/bin/fwtool -q -s /dev/null -t "$image_check" || true
+          ./staging_dir/host/bin/fwtool -q -i /dev/null -t "$image_check" || true
+          gzip -t "$image_check"
           gzip -dc -- "${vmdks[0]}" > "$vmdk_path"
           qemu-img check -f vmdk "$vmdk_path"
           cp -- .config "$artifact_dir/resolved.config"
