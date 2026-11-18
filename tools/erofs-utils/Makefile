@@ -33,7 +33,7 @@ endef
 
 define Host/Clean
 	rm -f $(STAGING_DIR_HOST)/bin/mkfs.erofs
-	rm -f $(STAGING_DIR_HOST)/bin/fsck/fsck.erofs
+	rm -f $(STAGING_DIR_HOST)/bin/fsck.erofs
 endef
 
 $(eval $(call HostBuild))
