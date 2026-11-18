@@ -49,12 +49,20 @@ jobs:
           # Later LuCI feed commits move luci-mod-network into QWRT core;
           # this LEDE revision still needs the module supplied by the feed.
           sed -i 's|^src-git luci .*|src-git luci https://github.com/coolsnowwolf/luci.git^e881fed794a36dd18f282a4e227b7a1ced5679e5|' feeds.conf.default
+          # A src-git URL^commit clones the entire OpenClash history on this LEDE revision.
+          openclash_dir="$RUNNER_TEMP/openclash"
+          git init -q "$openclash_dir"
+          git -C "$openclash_dir" fetch --no-tags --depth=1 \
+            https://github.com/vernesong/OpenClash.git e553e82e01c697aefbe1555261a503f425e00ccd
+          git -C "$openclash_dir" checkout --detach FETCH_HEAD
+          printf 'src-link openclash %s\n' "$openclash_dir" >> feeds.conf.default
           cat >> feeds.conf.default <<'EOF'
-          src-git openclash https://github.com/vernesong/OpenClash.git^e553e82e01c697aefbe1555261a503f425e00ccd
           src-git istore https://github.com/istoreos/istore.git^a97ace34f2da358a015b094d326bba2697697f2e
           EOF
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          du -sh "$openclash_dir"
+          df -h .
           git clone --depth=1 \
             https://github.com/thinktip/luci-theme-neobird.git \
             package/luci-theme-neobird
