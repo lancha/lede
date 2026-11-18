@@ -11,7 +11,8 @@ PKG_VERSION:=1.8.10
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL=https://git.kernel.org/pub/scm/linux/kernel/git/xiang/erofs-utils.git/snapshot/
+PKG_SOURCE_URL:=https://sources.buildroot.net/erofs-utils \
+	https://git.kernel.org/pub/scm/linux/kernel/git/xiang/erofs-utils.git/snapshot/
 PKG_HASH:=05eb4edebe11decce6ecb34e98d2f80c8cd283c2f2967d8ba7efd58418570514
 
 PKG_FIXUP:=autoreconf
@@ -32,7 +33,7 @@ endef
 
 define Host/Clean
 	rm -f $(STAGING_DIR_HOST)/bin/mkfs.erofs
-	rm -f $(STAGING_DIR_HOST)/bin/fsck.erofs
+	rm -f $(STAGING_DIR_HOST)/bin/fsck/fsck.erofs
 endef
 
 $(eval $(call HostBuild))
