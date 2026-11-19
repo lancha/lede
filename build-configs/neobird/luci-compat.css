@@ -1,0 +1,56 @@
+/* Neobird + ucode LuCI. Keep all custom-property names case-sensitive. */
+.main > .loading {
+    display: none;
+}
+
+.main > .main-left > .nav > .slide.active > .slide-menu {
+    display: block;
+}
+
+header .fill > .container {
+    margin: 0;
+    padding: 0;
+}
+
+.showSide {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    color: var(--textColor);
+}
+
+/* Upstream hides the footer, including useful firmware/version diagnostics. */
+footer {
+    visibility: visible;
+    height: auto;
+    min-height: 3rem;
+}
+
+@media (min-width: 993px) {
+    .showSide {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-left {
+        width: min(20rem, 85vw);
+        visibility: hidden;
+    }
+    .darkMask {
+        display: block;
+        visibility: hidden;
+    }
+    header .showSide {
+        width: 3rem;
+        height: 45px;
+        line-height: 45px;
+        font-family: sans-serif !important;
+        font-size: 1.5rem;
+        z-index: 1;
+    }
+    header #logo {
+        display: inline-block;
+        margin-left: 3rem;
+    }
+}

@@ -71,6 +71,14 @@ jobs:
           git -C package/luci-theme-neobird checkout --detach \
             22ebcf0d09c4ec50594b11c1b5419d474970aaa2
 
+      - name: Port and validate Neobird for current LuCI
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/neobird-compat.py apply .
+          python3 -m unittest discover -s tests/neobird -p 'test_*.py' -v
+          node tests/neobird/menu.test.cjs
+
       - name: Resolve and verify firmware configuration
         shell: bash
         run: |
@@ -143,6 +151,13 @@ jobs:
           done
           artifact_dir="$RUNNER_TEMP/lede-esxi-arm64"
           mkdir -p "$artifact_dir"
+          mapfile -t theme_packages < <(find bin/packages -type f -name 'luci-theme-neobird_*.ipk')
+          if (( ${#theme_packages[@]} != 1 )); then
+            printf 'Expected one Neobird package; found %d\n' "${#theme_packages[@]}" >&2
+            exit 1
+          fi
+          python3 scripts/neobird-compat.py verify-ipk "${theme_packages[0]}"
+          cp -- "${theme_packages[0]}" "$artifact_dir/"
           cp -- "${images[0]}" "$artifact_dir/"
           cp -- "${manifests[0]}" "$artifact_dir/installed.manifest"
           vmdk_name="${vmdks[0]##*/}"
@@ -163,6 +178,8 @@ jobs:
             printf 'Workflow run: %s/%s/actions/runs/%s\n' \
               "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
             printf 'Built at (UTC): %s\n' "$(date -u +%FT%TZ)"
+            printf 'Neobird source: %s\n' "$(git -C package/luci-theme-neobird rev-parse HEAD)"
+            printf 'Neobird compatibility: %s\n' "$(sha256sum scripts/neobird-compat.py)"
             printf '\nFeed commits:\n'
             for feed in feeds/*; do
               if [ -d "$feed/.git" ]; then
@@ -175,7 +192,7 @@ jobs:
           } > "$artifact_dir/BUILD-INFO.txt"
           (
             cd "$artifact_dir"
-            sha256sum -- ./*.img.gz ./*.vmdk resolved.config BUILD-INFO.txt installed.manifest > SHA256SUMS
+            sha256sum -- ./*.img.gz ./*.vmdk ./*.ipk resolved.config BUILD-INFO.txt installed.manifest > SHA256SUMS
             sha256sum -c SHA256SUMS
           )
 
