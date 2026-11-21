@@ -31,6 +31,15 @@ node tests/neobird/menu.test.cjs
 python3 scripts/neobird-compat.py verify-ipk /path/to/luci-theme-neobird.ipk
 ```
 
+The ESXi ARM64 workflow on `codex/esxi-arm64-features` applies this port before
+firmware compilation. Build 11 at `8506dc50fa86b952f629a6a00fcd1eb84de606d3`
+completed the port, configuration, firmware, packaged-IPK verification, and
+artifact upload steps successfully. Its artifact includes the theme IPK,
+firmware, resolved configuration, manifest, build provenance, and checksums.
+This is a build result, not a claim that the resulting firmware was installed
+or visually verified on the router. The fix is on the feature branch; it is
+not present in `master` unless separately merged.
+
 Build gates do not replace visual acceptance on the router: check login,
 overview, iStore, OpenClash, and mobile navigation in light and dark modes.
 No router configuration, password, subscription, or service is changed by this
