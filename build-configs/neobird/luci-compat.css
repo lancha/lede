@@ -222,6 +222,58 @@ div.table .td {
     margin: 4px;
 }
 
+.cbi-button,
+.btn {
+    border-radius: 8px;
+}
+
+.cbi-button + .cbi-button {
+    margin-left: .5rem;
+}
+
+.ifacebox {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 6rem;
+    max-width: 100%;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.ifacebox-head,
+.ifacebox-body {
+    display: block;
+    padding: 6px 8px;
+}
+
+.cbi-progressbar {
+    position: relative;
+    width: 100%;
+    min-width: 8rem;
+    height: 20px;
+    margin: 6px 0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--progressbarColor);
+}
+
+.cbi-progressbar > div {
+    height: 100%;
+    background: var(--progressbar);
+}
+
+.cbi-progressbar::after {
+    content: attr(title);
+    position: absolute;
+    inset: 0;
+    color: var(--progressbartxtColor);
+    text-align: center;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 #maincontent .cbi-value {
     gap: 0;
 }
@@ -488,6 +540,12 @@ body.node-main-login #maincontent .cbi-value-field {
 body.node-main-login #maincontent .cbi-value-field > input {
     min-width: 0;
     width: 100%;
+}
+
+body.node-main-login #maincontent .cbi-value {
+    background: transparent;
+    margin: 0 0 16px;
+    padding: 0;
 }
 
 body.node-main-login footer,

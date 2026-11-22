@@ -6,7 +6,7 @@
 		const exists = path => {
 			let node = tree;
 			for (const part of path)
-				node = node && node.children && node.children[part];
+				node = node && ui.menu.getChildren(node).find(child => child.name === part);
 			return !!node;
 		};
 		const slots = [

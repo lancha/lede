@@ -57,8 +57,10 @@ function setup(width = 1440, dispatchpath = ['admin', 'store', 'pages', 'store']
     };
     const window = { innerWidth: width, addEventListener() {} };
     const ui = {
+        // Fixtures default to visible; explicit unsatisfied nodes mirror LuCI's filter.
         menu: { getChildren: node => Object.entries(node.children || {}).map(
-            ([name, child]) => ({ ...child, name })) },
+            ([name, child]) => ({ satisfied: true, title: name, ...child, name }))
+            .filter(child => child.satisfied && child.title != null) },
         createHandlerFn: (self, name) => self[name].bind(self)
     };
     const L = { env: { dispatchpath, requestpath: dispatchpath, media: '/luci-static/neobird' }, url: (...parts) => '/cgi-bin/luci/' + parts.join('/') };
@@ -106,7 +108,10 @@ test('quick navigation prefers installed OpenClash and marks the current page', 
 test('quick navigation omits unavailable or unauthorized menu routes', () => {
     const { menu, elements } = setup();
     menu.renderQuickLinks({ children: { admin: { children: {
-        status: { children: { overview: {} } }
+        status: { children: { overview: {}, realtime: {satisfied: false} } },
+        services: {satisfied: false, children: {openclash: {}}},
+        network: {children: {network: {satisfied: false}}},
+        system: {children: {admin: {satisfied: false}}}
     } } } });
     assert.deepEqual(elements['#neobird-quicklinks'].children.map(link => link.attrs.href),
         ['/cgi-bin/luci/admin/status/overview']);

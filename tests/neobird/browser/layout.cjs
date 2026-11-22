@@ -25,6 +25,10 @@ const base = 'http://127.0.0.1:8876/tests/neobird/preview.html';
           assert.ok(!checks.includes('FAIL'), checks);
           const cardColor = await page.locator('#system-card').evaluate(el => getComputedStyle(el).backgroundColor);
           assert.equal(cardColor, scheme === 'dark' ? 'rgb(28, 28, 30)' : 'rgb(255, 255, 255)');
+          const progress = await page.locator('.cbi-progressbar').boundingBox();
+          const progressFill = await page.locator('.cbi-progressbar > div').boundingBox();
+          assert.equal(progress.height, 20, 'native progress bar must be visible');
+          assert.ok(progressFill.width > 0 && progressFill.width < progress.width, 'progress fill must be proportional');
           if (width <= 992) {
             await page.getByRole('button', {name:'Menu', exact:true}).click();
             assert.equal(await page.locator('.showSide').getAttribute('aria-expanded'), 'true');
@@ -57,7 +61,7 @@ const base = 'http://127.0.0.1:8876/tests/neobird/preview.html';
           await page.screenshot({path:path.join(output, `${name}-login.png`)});
           assert.deepEqual(errors, []);
           results.push({name, status:'passed', checks});
-          console.log(`PASS ${name}: cards, navigation, popup, actions, login`);
+          console.log(`PASS ${name}: cards, progress, navigation, popup, actions, login`);
         } catch (error) {
           failures++;
           results.push({name, status:'failed', error:String(error), errors});
