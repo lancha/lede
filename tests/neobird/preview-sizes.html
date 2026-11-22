@@ -1,0 +1,14 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Neobird responsive fixture</title>
+<style>body{font:16px system-ui;margin:16px} iframe{display:block;border:1px solid #888;margin-top:16px;height:800px}button{padding:8px;margin-right:8px}</style>
+<h1>Neobird 布局预览（合成数据）</h1>
+<p>测试用页面；不会修改设备。iframe 内使用生成后的主题 CSS 和菜单。</p>
+<button onclick="preview.style.width='1440px'">桌面 1440</button>
+<button onclick="preview.style.width='1024px'">平板 1024</button>
+<button onclick="preview.style.width='390px'">手机 390</button>
+<button onclick="preview.style.width='320px'">窄屏 320</button>
+<button onclick="preview.src='preview.html?scheme=light'">浅色</button>
+<button onclick="preview.src='preview.html?scheme=dark'">深色</button>
+<button onclick="preview.src='preview.html?login=1'">登录</button>
+<iframe id="preview" title="Neobird layout preview" src="preview.html" style="width:1440px"></iframe>

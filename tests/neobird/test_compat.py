@@ -33,9 +33,23 @@ class NeobirdRegression(unittest.TestCase):
         self.assertIn("slice(ctx.path, 1)", header)
         self.assertIn("getspnam('root')", header)
         self.assertIn("rootfs_type", header)
+        self.assertIn("ctx.authsession && length(ctx.path)", header)
+        self.assertIn('id="neobird-quicklinks"', header)
+        self.assertIn("viewport-fit=cover", header)
         self.assertIn("{% if (ctx.authsession): %}", footer)
         self.assertFalse((THEME / "luasrc/view/themes/neobird/header.htm").exists())
         self.assertFalse((THEME / "luasrc/view/themes/neobird/footer.htm").exists())
+
+    def test_layout_keeps_original_palette_and_mobile_controls(self):
+        css = (THEME / "htdocs/luci-static/neobird/css/luci-compat.css").read_text()
+        # A copied Design palette must fail even if every variable resolves.
+        self.assertNotRegex(css, r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?)\s*\(")
+        self.assertNotRegex(css, r"--(?!nb-)[\w-]+\s*:")
+        for contract in ("#maincontent .cbi-section", "div.table > .tr",
+                         ".cbi-dropdown[open] > ul.dropdown",
+                         "body.node-main-login", "env(safe-area-inset-bottom",
+                         "#maincontent .label"):
+            self.assertIn(contract, css)
 
     def test_packaged_files_checked_not_just_source(self):
         def tar_blob(files):

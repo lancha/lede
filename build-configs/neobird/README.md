@@ -44,3 +44,45 @@ Build gates do not replace visual acceptance on the router: check login,
 overview, iStore, OpenClash, and mobile navigation in light and dark modes.
 No router configuration, password, subscription, or service is changed by this
 build-time patch. Firmware installation remains a separate operation.
+
+## Layout completion (2026-11-22)
+
+Layout reference: `0x676e67/luci-theme-design@5cea733806ccaf17fd63790d171bb2b65f29f8bd`
+(Apache-2.0), particularly `dev/style.css` and the header layout. Design itself
+derives from Neobird. This port borrows the sidebar, card, form, responsive table,
+and bottom-navigation layout concepts; it does not import the Design palette,
+fonts, JavaScript runtime, or legacy Lua templates.
+
+The original Neobird CSS remains byte-for-byte unchanged. The compatibility layer
+can define only `--nb-*` layout variables, and colors must reference existing
+Neobird variables. Source and built-IPK checks enforce this. In particular the
+original dark-mode badge color is deliberately preserved.
+
+Modern `div.cbi-section` cards now receive the legacy card treatment. The header
+and independently scrolling sidebar reserve room for the fixed bottom bar, while
+footer and page actions stay in document flow. The generated ucode footer closes
+both the container and main content before rendering version information.
+Protected URLs receive the centered login layout whenever unauthenticated.
+
+`menu-layout.js` fills the five bottom slots only from the ACL-filtered menu tree
+and prefers installed OpenClash over legacy proxy plugins. Missing routes are
+omitted. Read-only wide tables receive their own scroll wrapper; interactive
+tables use labelled stacked cells on phones so dropdowns are not clipped by an
+overflow container. Native dropdown, tab and modal geometry is also supplied.
+
+The `layout` Actions job is required before firmware compilation. It applies the
+port to hash-checked fixtures, runs source/menu checks, then renders a **synthetic
+modern LuCI fixture** in Chromium at 1440, 1024, 390 and 320 pixels in both color
+schemes. Checks cover card colors, page overflow, authorized quick links, mobile
+menu dismissal, dropdown/modal geometry, unobscured actions and login. Screenshots
+and machine-readable results are uploaded even on failure; firmware compilation
+is blocked by a failed layout job.
+
+For manual local review after `apply`, run
+`python3 tests/neobird/serve-preview.py` and open
+`http://127.0.0.1:8876/tests/neobird/preview-sizes.html`.
+Preview files and browser dependencies are test fixtures, not installed packages.
+These checks do not exercise live ubus/RPC, OpenClash/iStore internals, browser
+extensions, real phone safe areas, or router upgrades. A persistent "Collecting
+data..." state requires separate runtime diagnosis; no CSS success implies that
+data loading has been repaired.

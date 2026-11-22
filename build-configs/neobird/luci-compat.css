@@ -1,15 +1,433 @@
-/* Neobird + ucode LuCI. Keep all custom-property names case-sensitive. */
+/*
+ * Neobird layout for native ucode / JS LuCI.
+ * Layout reference: luci-theme-design (Apache-2.0), see README.md.
+ * Preserve the original theme palette: no color literals or palette overrides.
+ */
+:root {
+    --nb-header-height: 60px;
+    --nb-sidebar-width: 18rem;
+    --nb-bottom-height: calc(50px + env(safe-area-inset-bottom, 0px));
+}
+
 .main > .loading {
     display: none;
+}
+
+body.logged-in .main {
+    top: var(--nb-header-height);
+    height: auto;
+    min-height: calc(100vh - var(--nb-header-height));
+    display: flow-root;
+}
+
+body.logged-in header {
+    height: var(--nb-header-height);
+    top: 0;
+}
+
+.main > .main-left {
+    top: var(--nb-header-height);
+    bottom: var(--nb-bottom-height);
+    height: auto;
+    width: var(--nb-sidebar-width);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.main > .main-right {
+    float: none;
+    width: auto;
+    min-width: 0;
+    margin-left: var(--nb-sidebar-width);
+    height: auto;
+}
+
+#maincontent > .container {
+    margin: 0;
+    padding: 24px 28px calc(24px + var(--nb-bottom-height));
+    min-width: 0;
+}
+
+header .fill > .container {
+    margin: 0;
+    padding: 0;
+    height: var(--nb-header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+header #logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--nb-sidebar-width);
+    max-width: var(--nb-sidebar-width);
+}
+
+header #logo img {
+    width: 0;
+    height: 45px;
+    padding: 0 0 0 220px;
+    background: var(--logo) center / contain no-repeat;
+}
+
+header #indicators {
+    position: static;
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 1rem 0 auto;
 }
 
 .main > .main-left > .nav > .slide.active > .slide-menu {
     display: block;
 }
 
-header .fill > .container {
+.main > .main-left > .nav > li > a {
+    position: relative;
+}
+
+.main > .main-left > .nav > .slide > a::after {
+    content: "›";
+    position: absolute;
+    right: .75rem;
+    transform: rotate(0deg);
+}
+
+.main > .main-left > .nav > .slide.active > a::after {
+    transform: rotate(90deg);
+}
+
+/* Direct top-level links need the same alignment as expandable categories. */
+.main > .main-left > .nav > li > a[data-title="iStore"] {
+    display: block;
+    padding: .675rem 0 .675rem 2.5rem;
+}
+
+.main > .main-left > .nav > li > a[data-title="iStore"]::before {
+    content: "▦";
+    position: absolute;
+    left: .7rem;
+}
+
+/* The reference theme's fixed quick navigation, populated from authorized menu nodes. */
+#neobird-quicklinks {
+    z-index: 102;
+    left: 0;
+    bottom: 0;
+    height: var(--nb-bottom-height);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    display: flex;
+    align-items: flex-start;
+}
+
+#neobird-quicklinks[hidden] {
+    display: none;
+}
+
+#neobird-quicklinks a {
+    flex: 0 1 100px;
+    float: none;
+    width: 20%;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 0;
+}
+
+#neobird-quicklinks a img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+#neobird-quicklinks a[aria-current="page"] {
+    border-top: 2px solid var(--activeColor);
+}
+
+/* Modern LuCI renders div.cbi-section, not the legacy fieldset. */
+#maincontent .cbi-section,
+.modal .cbi-section {
+    min-width: 0;
+    padding: 20px;
+    margin: 0 0 24px;
+    border: var(--sectionBorder);
+    border-radius: 12px;
+    background: var(--sectionbgColor);
+}
+
+#maincontent .cbi-section .cbi-section,
+.modal .cbi-section .cbi-section {
     margin: 0;
     padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+#maincontent .cbi-section > h3,
+#maincontent .cbi-section > .cbi-title > h3,
+.modal .cbi-section > h3 {
+    margin: 0 0 12px;
+    padding: 0 0 8px;
+}
+
+#maincontent .cbi-section-descr {
+    margin-bottom: 12px;
+}
+
+/* Both native HTML tables and LuCI's div.table rows must keep their columns. */
+div.table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+div.table > .tr,
+div.table > .thead > .tr,
+div.table > .tbody > .tr {
+    display: table-row;
+}
+
+div.table .th,
+div.table .td {
+    display: table-cell;
+    float: none;
+}
+
+#maincontent .table .tr > .td,
+#maincontent .table .tr > .th {
+    padding: 12px;
+    vertical-align: middle;
+    line-height: 1.5;
+    border-bottom: var(--cbilineColor);
+}
+
+#maincontent .table .tr:last-child > .td,
+#maincontent .table .tr:last-child > .th {
+    border-bottom: 0;
+}
+
+#maincontent .table .td.cbi-section-actions {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.cbi-section-actions > *,
+.cbi-page-actions > * {
+    margin: 4px;
+}
+
+#maincontent .cbi-value {
+    gap: 0;
+}
+
+#maincontent .cbi-value-title {
+    float: none;
+    flex: 0 0 33%;
+    min-width: 0;
+    padding: 12px 16px 12px 0;
+}
+
+#maincontent .cbi-value-field {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+}
+
+#maincontent .cbi-value-field > input[type="text"],
+#maincontent .cbi-value-field > input[type="password"],
+#maincontent .cbi-value-field > select,
+#maincontent .cbi-value-field > .cbi-dropdown {
+    width: 100%;
+    max-width: 42rem;
+}
+
+.cbi-value-description {
+    display: block;
+    padding: .35rem 0 0;
+    overflow-wrap: anywhere;
+}
+
+.cbi-page-actions {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .25rem;
+    margin: 20px 0;
+}
+
+/* Scrolling belongs to the wide table, not the card (dropdowns must not be clipped). */
+.nb-table-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.nb-table-scroll:focus-visible {
+    outline: 2px solid var(--activeColor);
+    outline-offset: 2px;
+}
+
+/* Native JS widgets absent from the old Neobird stylesheet. */
+.cbi-dropdown {
+    position: relative;
+    display: inline-flex;
+    min-width: 8rem;
+    max-width: 100%;
+    min-height: 2.8rem;
+    border: var(--inputBorder);
+    border-radius: 8px;
+    background: var(--inputbgColor);
+    color: var(--inputtextColor);
+}
+
+.cbi-dropdown > ul {
+    display: flex;
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.cbi-dropdown > ul.preview,
+.cbi-dropdown > ul > li,
+.cbi-dropdown > .more,
+.cbi-dropdown > ul > li > form,
+.cbi-dropdown .hide-close {
+    display: none;
+}
+
+.cbi-dropdown > ul > li {
+    padding: .5rem;
+    align-items: center;
+    overflow-wrap: anywhere;
+}
+
+.cbi-dropdown > .open,
+.cbi-dropdown > .more {
+    align-items: center;
+    justify-content: center;
+    padding: 0 .5rem;
+}
+
+.cbi-dropdown > .open,
+.cbi-dropdown > ul > li[display],
+.cbi-dropdown[open] > ul.preview,
+.cbi-dropdown[open] > ul.dropdown > li,
+.cbi-dropdown[multiple][more] > .more,
+.cbi-dropdown[multiple][empty] > .more {
+    display: flex;
+}
+
+.cbi-dropdown[empty] > ul > li,
+.cbi-dropdown[multiple][open] > ul.dropdown > li > form {
+    display: block;
+}
+
+.cbi-dropdown[open] > ul.dropdown {
+    display: block;
+    position: absolute;
+    z-index: 1100;
+    min-width: 100%;
+    max-height: 16rem;
+    overflow-y: auto;
+    border: var(--inputBorder);
+    border-radius: 8px;
+    background: var(--inputbgColor);
+    color: var(--inputtextColor);
+}
+
+.cbi-dropdown[open] .hide-open {
+    display: none;
+}
+
+.cbi-dropdown[open] .hide-close {
+    display: initial;
+}
+
+.cbi-dropdown[open] li[selected],
+.cbi-dropdown[open] li.focus,
+.cbi-dropdown[open] li:hover {
+    background: var(--activeColor);
+    color: var(--bttextColor);
+}
+
+.cbi-dropdown[disabled] {
+    pointer-events: none;
+    opacity: .6;
+}
+
+.cbi-dropdown img {
+    max-height: 1.5rem;
+    width: auto;
+    vertical-align: middle;
+}
+
+/* Preserve LuCI's hidden tabs, modal stacking, and scrollable dialogs. */
+[data-tab][data-tab-active="false"] {
+    display: none;
+}
+
+#modal_overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    overflow-y: auto;
+    padding: 5vh 16px;
+    background: var(--navbgColor);
+    backdrop-filter: blur(6px);
+}
+
+body.modal-overlay-active #modal_overlay {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.modal {
+    width: min(100%, 70rem);
+    margin: auto;
+    padding: 24px;
+    border: var(--inputBorder);
+    border-radius: 12px;
+    background: var(--sectionbgColor);
+    color: var(--textColor);
+}
+
+.modal .cbi-page-actions {
+    margin-bottom: 0;
+}
+
+/* Reset the legacy mobile .label positioning for native status indicators. */
+#maincontent .label,
+#indicators .label {
+    position: static;
+    inset: auto;
+}
+
+.tabs,
+.cbi-tabmenu {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.tabs > li,
+.cbi-tabmenu > li {
+    flex-shrink: 0;
+}
+
+.tabs > li > a,
+.cbi-tabmenu > li > a {
+    white-space: nowrap;
 }
 
 .showSide {
@@ -19,11 +437,62 @@ header .fill > .container {
     color: var(--textColor);
 }
 
-/* Upstream hides the footer, including useful firmware/version diagnostics. */
-footer {
+/* Keep version information in document flow above the fixed navigation. */
+.main-right > footer {
     visibility: visible;
     height: auto;
     min-height: 3rem;
+    margin-bottom: var(--nb-bottom-height);
+}
+
+/* Unauthenticated routes always receive this class, even when /admin/... was requested. */
+body.node-main-login .main {
+    top: 0;
+    min-height: 100vh;
+    height: auto;
+}
+
+body.node-main-login .main-right {
+    margin: 0;
+    width: 100%;
+}
+
+body.node-main-login #maincontent {
+    min-height: 100vh;
+    padding: 24px 16px;
+}
+
+body.node-main-login #maincontent > .container {
+    width: min(100%, 340px);
+    padding: 90px 0 20px;
+    margin: 0;
+    background-position: top center;
+    background-size: 300px auto;
+}
+
+body.node-main-login #maincontent .cbi-section {
+    padding: 0;
+    margin: 0;
+    background: transparent;
+}
+
+body.node-main-login #maincontent .cbi-value-title {
+    display: none !important;
+}
+
+body.node-main-login #maincontent .cbi-value-field {
+    display: block;
+    width: 100%;
+}
+
+body.node-main-login #maincontent .cbi-value-field > input {
+    min-width: 0;
+    width: 100%;
+}
+
+body.node-main-login footer,
+body.node-main-login #neobird-quicklinks {
+    display: none;
 }
 
 @media (min-width: 993px) {
@@ -33,24 +502,121 @@ footer {
 }
 
 @media (max-width: 992px) {
-    .main-left {
+    :root {
+        --nb-header-height: 50px;
+    }
+    .main > .main-left {
         width: min(20rem, 85vw);
         visibility: hidden;
+    }
+    .main > .main-right {
+        margin-left: 0;
+        width: 100%;
     }
     .darkMask {
         display: block;
         visibility: hidden;
+        top: var(--nb-header-height);
+        bottom: var(--nb-bottom-height);
+        height: auto;
     }
     header .showSide {
+        position: static;
         width: 3rem;
-        height: 45px;
-        line-height: 45px;
+        height: var(--nb-header-height);
+        line-height: var(--nb-header-height);
         font-family: sans-serif !important;
         font-size: 1.5rem;
         z-index: 1;
     }
     header #logo {
-        display: inline-block;
-        margin-left: 3rem;
+        margin: 0;
+        max-width: calc(100vw - 9rem);
+    }
+    header #logo img {
+        width: 0;
+        height: 45px;
+        padding: 0 0 0 min(200px, calc(100vw - 9rem));
+        background: var(--logo) center / contain no-repeat;
+    }
+    header #indicators {
+        margin-right: .5rem;
+    }
+    #maincontent > .container {
+        padding: 20px 16px calc(20px + var(--nb-bottom-height));
+    }
+    #neobird-quicklinks a {
+        flex: 1 1 0;
+        max-width: none;
+    }
+}
+
+@media (max-width: 600px) {
+    #maincontent .cbi-section,
+    .modal {
+        padding: 16px;
+    }
+    #maincontent .cbi-value {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        padding: 12px 0;
+        margin: 0;
+    }
+    #maincontent .cbi-value-title,
+    #maincontent .cbi-value-field {
+        flex: 0 1 auto;
+        width: 100%;
+    }
+    #maincontent .cbi-value-title {
+        padding: 0 0 8px;
+    }
+    #maincontent .table .tr > .td,
+    #maincontent .table .tr > .th {
+        padding: 10px 8px;
+    }
+    .cbi-page-actions {
+        justify-content: center;
+    }
+}
+
+/* Native form grids become labelled rows on phones, without clipping popups. */
+@media (max-width: 768px) {
+    #maincontent .nb-interactive-table,
+    #maincontent .nb-interactive-table > tbody {
+        display: block;
+    }
+    #maincontent .nb-interactive-table .tr {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 12px 0;
+        border-bottom: var(--cbilineColor);
+    }
+    #maincontent .nb-interactive-table .table-titles,
+    #maincontent .nb-interactive-table .cbi-section-table-titles,
+    #maincontent .nb-interactive-table .cbi-section-table-descr {
+        display: none;
+    }
+    #maincontent .nb-interactive-table .tr > .td {
+        display: block;
+        flex: 1 1 50%;
+        width: auto;
+        min-width: 0;
+        border: 0;
+        overflow-wrap: anywhere;
+    }
+    #maincontent .nb-interactive-table .td[data-title]::before {
+        content: attr(data-title);
+        display: block;
+        font-weight: bold;
+        margin-bottom: 6px;
+    }
+    #maincontent .nb-interactive-table .td.cbi-section-actions {
+        flex-basis: 100%;
+        white-space: normal;
+    }
+    #maincontent .nb-interactive-table .cbi-dropdown {
+        min-width: 0;
+        width: 100%;
     }
 }

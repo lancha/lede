@@ -51,8 +51,8 @@ def apply(root):
     text = makefile.read_text()
     if "LUCI_MINIFY_CSS:=0" not in text:
         text = replace_once(text, "LUCI_DEPENDS:=", "LUCI_MINIFY_CSS:=0\nLUCI_DEPENDS:=+luci-base")
-        text = replace_once(text, "PKG_RELEASE:=202202260758", "PKG_RELEASE:=2026111901")
-        makefile.write_text(text)
+    text = re.sub(r"^PKG_RELEASE:=\d+$", "PKG_RELEASE:=2026112201", text, flags=re.M)
+    makefile.write_text(text)
 
     header = source["ucode/template/themes/material/header.ut"]
     header = replace_once(
@@ -67,6 +67,8 @@ def apply(root):
                           'aria-controls="mainmenu" aria-expanded="false">☰</button>')
     header = replace_once(header, "{{ media }}/brand.png", "{{ media }}/images/logo.png")
     header = replace_once(header, 'alt="OpenWrt"', 'alt="Neobird"')
+    header = replace_once(header, 'content="width=device-width, initial-scale=1"',
+                          'content="width=device-width, initial-scale=1, viewport-fit=cover"')
     header = replace_once(header,
         '\t\t\t<a class="brand" href="#">{{ striptags(`${boardinfo.hostname ?? \'?\'}`) }}</a>\n', "")
     header = replace_once(header, '<span class="status" id="indicators">',
@@ -74,13 +76,29 @@ def apply(root):
     # Neobird's historical page selectors omit the admin category.
     header = replace_once(header, "`node-${join('-', ctx.path)}`",
                           "`node-${join('-', slice(ctx.path, 1))}`")
+    # Auth forms may be served at /admin/network/...: path length alone is not
+    # a login detector. Keep the centered login layout on all protected routes.
+    header = replace_once(header, "length(ctx.path) ? `node-",
+                          "ctx.authsession && length(ctx.path) ? `node-")
+    header = replace_once(header, '<div class="main">',
+                          '{% if (ctx.authsession): %}\n'
+                          '<nav class="navbar" id="neobird-quicklinks" '
+                          'aria-label="{{ _(\'Navigation\') }}" hidden></nav>\n'
+                          '{% endif %}\n<div class="main">')
     footer = source["ucode/template/themes/material/footer.ut"].replace("menu-material", "menu-neobird")
     footer = replace_once(footer, "<script>L.require('menu-neobird')</script>",
                           "{% if (ctx.authsession): %}\n"
                           "\t<script>L.require('menu-neobird')</script>\n\t{% endif %}")
-    footer = replace_once(footer, "</body>", "</div>\n</body>")
+    # Close both .container and #maincontent before the footer; the two
+    # remaining closes belong to .main-right and .main.
+    footer = replace_once(footer, '\t\t\t</div>\n\t\t\t<footer',
+                          '\t\t\t</div>\n\t\t</div>\n\t\t<footer')
 
     menu = source["htdocs/luci-static/resources/menu-material.js"]
+    menu = replace_once(menu, "\trender(tree) {",
+                         (root / "build-configs/neobird/menu-layout.js").read_text()
+                         + "\trender(tree) {\n"
+                         "\t\tthis.renderQuickLinks(tree);\n\t\tthis.setupTableLayout();")
     menu = menu.replace("1152", "992")
     menu = replace_once(menu, "node = node.children[L.env.dispatchpath[i]];",
                          "node = node.children && node.children[L.env.dispatchpath[i]];")
@@ -124,14 +142,23 @@ def verify(read):
         raise ValueError("Packaged Neobird CSS differs from the reviewed, unminified source")
     if ".slide.active > .slide-menu" not in compat or "@media (max-width: 992px)" not in compat:
         raise ValueError("Responsive menu compatibility rules missing")
+    if "#maincontent .cbi-section" not in compat or "#neobird-quicklinks" not in compat:
+        raise ValueError("Modern section or quick navigation layout missing")
+    # Palette changes must never hide inside the layout compatibility layer.
+    if re.search(r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?)\s*\(", compat):
+        raise ValueError("Layout layer must reuse Neobird colors, not add literals")
+    if re.search(r"--(?!nb-)[\w-]+\s*:", compat):
+        raise ValueError("Layout layer must not override Neobird palette variables")
     header = read("usr/share/ucode/luci/template/themes/neobird/header.ut")
     footer = read("usr/share/ucode/luci/template/themes/neobird/footer.ut")
     if "/css/style.css" not in header or "/css/luci-compat.css" not in header:
         raise ValueError("Neobird styles are not loaded by the ucode header")
+    if "neobird-quicklinks" not in header or "ctx.authsession && length(ctx.path)" not in header:
+        raise ValueError("Native quick navigation or protected-route login layout missing")
     if "ctx.authsession" not in footer or "menu-neobird" not in footer:
         raise ValueError("Authenticated native LuCI menu loader missing")
     menu = read("www/luci-static/resources/menu-neobird.js")
-    if "ui.menu.load()" not in menu or "992" not in menu:
+    if "ui.menu.load()" not in menu or "992" not in menu or "renderQuickLinks" not in menu:
         raise ValueError("Native LuCI menu module missing")
 
 

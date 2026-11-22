@@ -1,0 +1,9 @@
+{
+  "name": "neobird-layout-checks",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Build-time synthetic layout checks; not shipped in the firmware",
+  "dependencies": {
+    "playwright": "1.65.1"
+  }
+}

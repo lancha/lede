@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neobird layout fixture — synthetic data</title>
+<link rel="stylesheet" href="../../package/luci-theme-neobird/htdocs/luci-static/neobird/css/style.css">
+<link rel="stylesheet" href="../../package/luci-theme-neobird/htdocs/luci-static/neobird/css/luci-compat.css">
+<body class="logged-in node-status-overview">
+<header><div class="fill"><div class="container">
+  <button type="button" class="showSide" aria-label="Menu" aria-controls="mainmenu" aria-expanded="false">☰</button>
+  <a id="logo" href="#"><img src="../../package/luci-theme-neobird/htdocs/luci-static/neobird/images/logo.png" alt="Neobird"></a>
+  <span class="pull-right" id="indicators"><span class="label">5 pending</span></span>
+</div></div></header>
+<nav class="navbar" id="neobird-quicklinks" aria-label="Navigation" hidden></nav>
+<div class="main">
+  <div class="loading"></div>
+  <div class="main-left" id="mainmenu" style="display:none"></div>
+  <div class="main-right">
+    <div class="modemenu-buttons" style="display:none"><ul id="modemenu"></ul></div>
+    <div class="darkMask"></div>
+    <div id="maincontent"><div class="container">
+      <div id="tabmenu" style="display:none"></div>
+      <h2>状态 · 布局测试</h2>
+      <p>合成数据，不连接路由器。<a href="?scheme=light">浅色</a> · <a href="?scheme=dark">深色</a>
+        · <a href="?login=1">登录</a> · <button id="test-modal">测试弹窗</button></p>
+      <p id="checks">正在检查布局…</p>
+      <div class="cbi-section" id="system-card">
+        <h3>系统</h3>
+        <div class="table">
+          <div class="tr"><div class="td" width="33%">主机名</div><div class="td">Neobird preview</div></div>
+          <div class="tr"><div class="td">目标平台</div><div class="td">armsr/armv8</div></div>
+          <div class="tr"><div class="td">固件版本</div><div class="td">Layout fixture / native LuCI DOM</div></div>
+          <div class="tr"><div class="td">运行时间</div><div class="td">1d 20h</div></div>
+          <div class="tr"><div class="td">内存</div><div class="td"><div class="cbi-progressbar" title="150 / 406 MB (36%)"><div style="width:36%"></div></div></div></div>
+        </div>
+      </div>
+      <div class="cbi-section" id="form-card">
+        <h3>基本设置</h3>
+        <div class="cbi-value"><label class="cbi-value-title" for="host">主机名</label>
+          <div class="cbi-value-field"><input id="host" type="text" value="preview"><div class="cbi-value-description">标签与输入区域在手机上纵向排列。</div></div></div>
+        <div class="cbi-value"><span class="cbi-value-title">协议</span><div class="cbi-value-field">
+          <div class="cbi-dropdown" id="protocol" role="button" tabindex="0" aria-label="协议">
+            <ul class="dropdown"><li display="0" selected>DHCP 客户端</li><li>静态地址</li><li>不配置</li></ul>
+            <ul class="preview"><li display="0">DHCP 客户端</li></ul><span class="open">▾</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="cbi-section">
+        <h3>接口总览</h3>
+        <div class="table cbi-section-table" id="interfaces">
+          <div class="tr table-titles"><div class="th">网络</div><div class="th">状态</div><div class="th">动作</div></div>
+          <div class="tr cbi-section-table-row">
+            <div class="td"><span class="ifacebox"><strong>LAN</strong><div class="ifacebox-body">br-lan</div></span></div>
+            <div class="td">接收：219 GB<br>发送：119 GB<br>运行时间：1d 20h</div>
+            <div class="td cbi-section-actions"><button class="cbi-button">连接</button><button class="cbi-button">关闭</button><button class="cbi-button cbi-button-edit">修改</button><button class="cbi-button">删除</button></div>
+          </div>
+          <div class="tr cbi-section-table-row">
+            <div class="td"><span class="ifacebox"><strong>WAN</strong><div class="ifacebox-body">eth1</div></span></div>
+            <div class="td">接收：120 GB<br>发送：220 GB<br>运行时间：1d 20h</div>
+            <div class="td cbi-section-actions"><button class="cbi-button">连接</button><button class="cbi-button">关闭</button><button class="cbi-button cbi-button-edit">修改</button><button class="cbi-button">删除</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="cbi-section"><h3>宽状态表格</h3>
+        <div class="table" id="wide-table" style="min-width:720px">
+          <div class="tr table-titles"><div class="th">名称</div><div class="th">地址</div><div class="th">协议</div><div class="th">接收 / 发送</div><div class="th">持续时间</div></div>
+          <div class="tr"><div class="td">合成记录</div><div class="td">documentation.example</div><div class="td">TCP</div><div class="td">100 / 200 MB</div><div class="td">20 minutes</div></div>
+        </div>
+      </div>
+      <div class="cbi-page-actions"><button class="cbi-button cbi-button-apply">保存并应用</button><button class="cbi-button cbi-button-save">保存</button><button class="cbi-button">复位</button></div>
+    </div></div>
+    <footer>Neobird · Synthetic layout fixture</footer>
+  </div>
+</div>
+<div id="modal_overlay"><div class="modal" role="dialog" aria-modal="true"><h3>测试弹窗</h3><p>仅测试布局，不修改路由器。</p><button id="close-modal">关闭</button></div></div>
+<script>
+// This development fixture executes the generated production menu against a
+// synthetic ACL-filtered tree. It is not installed in the firmware.
+const params = new URLSearchParams(location.search);
+const media = '/package/luci-theme-neobird/htdocs/luci-static/neobird';
+const L = { env: { media, dispatchpath: ['admin', 'status', 'overview'], requestpath: ['admin'] },
+  url: (...parts) => '#/' + parts.join('/') };
+const E = (tag, attrs = {}, children = []) => {
+  if (Array.isArray(tag)) return document.createDocumentFragment();
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs))
+    if (typeof value === 'function') el.addEventListener(key, value);
+    else el.setAttribute(key, value);
+  for (const child of children) el.append(child);
+  return el;
+};
+const tree = { children: { admin: { title: '管理', children: {
+  status: {title: 'Status', children: {overview: {title: '概览'}, realtime: {title: '实时信息'}}},
+  system: {title: 'System', children: {admin: {title: '管理权'}}},
+  services: {title: 'Services', children: {openclash: {title: 'OpenClash'}}},
+  store: {title: 'iStore'},
+  network: {title: 'Network', children: {network: {title: '接口'}, firewall: {title: '防火墙'}, dhcp: {title: 'DHCP / DNS'}}},
+  logout: {title: 'Logout'}
+} } } };
+const labels = {Status:'状态',System:'系统',Services:'服务',Network:'网络',Logout:'退出'};
+const ui = { menu: {
+  load: () => Promise.resolve(tree),
+  getChildren: node => Object.entries(node.children || {}).map(([name, value]) => ({...value, name}))
+}, createHandlerFn: (obj, name) => obj[name].bind(obj) };
+String.prototype.format = function(...args) {let i=0; return this.replace(/%s/g, () => args[i++]);};
+if (params.has('login')) {
+  document.body.className = 'node-main-login';
+  document.querySelector('#maincontent > .container').innerHTML = `<form><h2>需要授权</h2><p>请输入用户名和密码。</p><div class="cbi-section"><div class="cbi-value"><label class="cbi-value-title">用户名</label><div class="cbi-value-field"><input type="text" class="cbi-input-user" value="root"></div></div><div class="cbi-value"><label class="cbi-value-title">密码</label><div class="cbi-value-field"><input type="password" class="cbi-input-password" placeholder="密码"></div></div></div><div><button type="button" class="cbi-button cbi-button-apply">登录</button><button type="reset" class="cbi-button">复位</button></div></form>`;
+}
+window.addEventListener('load', async () => {
+  // Emulate the color-scheme media query using the unchanged source declarations.
+  for (const sheet of document.styleSheets)
+    for (const rule of sheet.cssRules)
+      if (rule.media && rule.conditionText.includes('prefers-color-scheme'))
+        rule.media.mediaText = params.get('scheme') === 'dark' ? 'all' : 'not all';
+  if (params.has('login')) return;
+  const source = await fetch('/package/luci-theme-neobird/htdocs/luci-static/resources/menu-neobird.js').then(r => r.text());
+  const menu = new Function('baseclass', 'ui', 'L', 'E', '_', source)({extend: x => x}, ui, L, E, s => labels[s] || s);
+  menu.render(tree);
+  document.querySelector('#protocol').onclick = ev => ev.currentTarget.toggleAttribute('open');
+  document.querySelector('#test-modal').onclick = () => document.body.classList.add('modal-overlay-active');
+  document.querySelector('#close-modal').onclick = () => document.body.classList.remove('modal-overlay-active');
+  const check = () => {
+    const card = document.querySelector('#system-card');
+    const nav = document.querySelector('#neobird-quicklinks');
+    const assertions = {
+      '无页面横向溢出': document.documentElement.scrollWidth <= window.innerWidth + 1,
+      '现代卡片': getComputedStyle(card).borderRadius === '12px' && getComputedStyle(card).backgroundColor !== 'rgba(0, 0, 0, 0)',
+      '五个快捷入口': nav.children.length === 5,
+      '底栏固定': Math.abs(nav.getBoundingClientRect().bottom - innerHeight) <= 1,
+      '宽表独立滚动': !!document.querySelector('#wide-table').closest('.nb-table-scroll'),
+      '表格操作可响应': document.querySelector('#interfaces').classList.contains('nb-interactive-table')
+    };
+    document.querySelector('#checks').textContent = Object.entries(assertions).map(([n, ok]) => `${ok ? 'PASS' : 'FAIL'} ${n}`).join(' · ');
+  };
+  requestAnimationFrame(check);
+  addEventListener('resize', check);
+});
+</script>

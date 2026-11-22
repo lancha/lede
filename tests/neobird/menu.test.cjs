@@ -38,13 +38,14 @@ class Element {
     }
     addEventListener(name, fn) { this.events[name] = fn; }
     setAttribute(name, value) { this.attrs[name] = value; }
+    replaceChildren(...children) { this.children.length = 0; children.forEach(child => this.appendChild(child)); }
     blur() {}
 }
 
 function setup(width = 1440, dispatchpath = ['admin', 'store', 'pages', 'store']) {
     const elements = Object.fromEntries([
         '#mainmenu', '#modemenu', '#tabmenu', '.showSide', '.darkMask',
-        '.main > .loading', '.main-right'
+        '.main > .loading', '.main-right', '#neobird-quicklinks'
     ].map(selector => [selector, new Element('div')]));
     elements['.main-left'] = elements['#mainmenu'];
     new Element('div', {}, [elements['#modemenu']]);
@@ -60,7 +61,7 @@ function setup(width = 1440, dispatchpath = ['admin', 'store', 'pages', 'store']
             ([name, child]) => ({ ...child, name })) },
         createHandlerFn: (self, name) => self[name].bind(self)
     };
-    const L = { env: { dispatchpath, requestpath: dispatchpath }, url: (...parts) => '/cgi-bin/luci/' + parts.join('/') };
+    const L = { env: { dispatchpath, requestpath: dispatchpath, media: '/luci-static/neobird' }, url: (...parts) => '/cgi-bin/luci/' + parts.join('/') };
     const E = (tag, attrs, children) => new Element(Array.isArray(tag) ? 'fragment' : tag, attrs, children);
     const code = fs.readFileSync(path.join(__dirname,
         '../../package/luci-theme-neobird/htdocs/luci-static/resources/menu-neobird.js'), 'utf8');
@@ -69,7 +70,7 @@ function setup(width = 1440, dispatchpath = ['admin', 'store', 'pages', 'store']
     return { menu, elements, window, walk };
 }
 
- test('native menu renders services and a direct iStore link', () => {
+test('native menu renders services and a direct iStore link', () => {
     const { menu, elements, walk } = setup();
     menu.render({ children: { admin: { title: 'Administration', children: {
         services: { title: 'Services', children: { openclash: { title: 'OpenClash' } } },
@@ -80,6 +81,37 @@ function setup(width = 1440, dispatchpath = ['admin', 'store', 'pages', 'store']
     assert.ok(links.some(node => node.attrs.href === '/cgi-bin/luci/admin/services/openclash'));
     assert.equal(links.find(node => node.attrs['data-title'] === 'Services').children[0], 'Services');
     assert.equal(elements['.main > .loading'].style.visibility, 'hidden');
+});
+
+test('quick navigation prefers installed OpenClash and marks the current page', () => {
+    const { menu, elements } = setup(1440, ['admin', 'services', 'openclash', 'client']);
+    const tree = { children: { admin: { children: {
+        status: { children: { overview: {}, realtime: {} } },
+        services: { children: { openclash: {}, shadowsocksr: {} } },
+        network: { children: { network: {} } },
+        system: { children: { admin: {} } }
+    } } } };
+    menu.renderQuickLinks(tree);
+    const bar = elements['#neobird-quicklinks'];
+    assert.equal(bar.children.length, 5);
+    assert.equal(bar.hidden, false);
+    assert.equal(bar.children[1].attrs.href, '/cgi-bin/luci/admin/services/openclash');
+    assert.equal(bar.children[1].attrs['aria-current'], 'page');
+    assert.equal(bar.children[1].children[0].attrs.src, '/luci-static/neobird/images/ssr.png');
+    assert.ok(bar.children.every(link => link.attrs['aria-label']));
+    menu.renderQuickLinks(tree);
+    assert.equal(bar.children.length, 5, 're-render must not duplicate links');
+});
+
+test('quick navigation omits unavailable or unauthorized menu routes', () => {
+    const { menu, elements } = setup();
+    menu.renderQuickLinks({ children: { admin: { children: {
+        status: { children: { overview: {} } }
+    } } } });
+    assert.deepEqual(elements['#neobird-quicklinks'].children.map(link => link.attrs.href),
+        ['/cgi-bin/luci/admin/status/overview']);
+    menu.renderQuickLinks({ children: {} });
+    assert.equal(elements['#neobird-quicklinks'].hidden, true);
 });
 
 test('submenu opens and closes even when a nested icon is clicked', () => {

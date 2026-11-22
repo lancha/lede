@@ -15,7 +15,68 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  layout:
+    name: Validate Neobird layout before firmware compilation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout the fork
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Fetch pinned theme and LuCI template fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q package/luci-theme-neobird
+          git -C package/luci-theme-neobird fetch --no-tags --depth=1 \
+            https://github.com/thinktip/luci-theme-neobird.git \
+            22ebcf0d09c4ec50594b11c1b5419d474970aaa2
+          git -C package/luci-theme-neobird checkout --detach FETCH_HEAD
+          fixture=feeds/luci/themes/luci-theme-material
+          for file in \
+            ucode/template/themes/material/header.ut \
+            ucode/template/themes/material/footer.ut \
+            htdocs/luci-static/resources/menu-material.js
+          do
+            mkdir -p "$fixture/$(dirname "$file")"
+            curl --fail --location --retry 3 \
+              "https://raw.githubusercontent.com/coolsnowwolf/luci/e881fed794a36dd18f282a4e227b7a1ced5679e5/themes/luci-theme-material/$file" \
+              -o "$fixture/$file"
+          done
+          python3 scripts/neobird-compat.py apply .
+          python3 -m unittest discover -s tests/neobird -p 'test_*.py' -v
+          node tests/neobird/menu.test.cjs
+      - name: Install isolated browser test dependencies
+        working-directory: tests/neobird/browser
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx --no-install playwright install --with-deps --only-shell chromium
+      - name: Check desktop and mobile layouts in both color schemes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/neobird/serve-preview.py > "$RUNNER_TEMP/neobird-preview.log" 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8876/tests/neobird/preview.html > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          NEOBIRD_TEST_OUTPUT="$RUNNER_TEMP/neobird-layout-results" node tests/neobird/browser/layout.cjs
+      - name: Upload layout results and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: neobird-layout-${{ github.run_number }}
+          path: ${{ runner.temp }}/neobird-layout-results
+          retention-days: 30
+          if-no-files-found: warn
+
   build:
+    needs: layout
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     steps:
